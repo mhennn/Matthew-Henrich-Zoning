@@ -1,25 +1,41 @@
 /* ==========================================================================
    PORTFOLIO.JS — dynamic project cards
    --------------------------------------------------------------------------
-   Renders the "Work" grid from two plain files. No HTML editing needed:
+   Renders the "Work" grid from three plain files. No HTML editing needed:
 
-     • links/portfolio-links.txt → one project URL per line (row order)
-     • projects/<NN>_<repo>.png  → thumbnail. NN = row number (01, 02, …),
-                                   <repo> = last segment of the URL.
+     • links/portfolio-links.txt              → one project URL per line (row order)
+     • projects/<NN>_<repo>.png               → thumbnail. NN = row number (01, 02, …),
+                                                <repo> = last segment of the URL.
+     • projects/description/description.txt   → one description per line (row order).
 
    Add a line to the .txt + drop a correctly-named image into projects/
-   and the grid updates on next load. The embedded fallback list is used
-   only when the .txt can't be fetched (e.g. the page opened via file://).
+   (and optionally a description line) and the grid updates on next load.
+   The embedded fallback list is used only when the .txt can't be fetched
+   (e.g. the page opened via file://).
    ========================================================================== */
 
 (() => {
   "use strict";
 
-  /* Fallback shown only when links/portfolio-links.txt can't be fetched. */
+  const LINKS_URL = "links/portfolio-links.txt";
+  const DESCS_URL = "projects/description/description.txt";
+
+  const DEFAULT_DESC =
+    "Built and shipped end to end — open the repository for the code, docs, and details.";
+
+  /* Fallback shown only when the files can't be fetched. */
   const FALLBACK_LINES = [
     "https://github.com/mhennn/SQL-Inventory-System",
     "https://github.com/mhennn/Feed-Pipeline",
     "https://github.com/mhennn/Contract-Generator-Streamlit",
+    "https://github.com/mhennn/PICTLEGO",
+  ];
+
+  const FALLBACK_DESCS = [
+    "SQL-powered inventory tracker — manage stock, products, and movement with clean, queryable data.",
+    "Automated data feed pipeline — collects, cleans, and delivers data end to end.",
+    "Streamlit app that turns simple inputs into ready-to-use contracts in seconds.",
+    "Turns any picture into a LEGO-style mosaic, brick by brick.",
   ];
 
   /* Words that should stay uppercase in generated titles. */
@@ -78,12 +94,14 @@
     const num = pad2(index + 1);
     const imgSrc = `projects/${num}_${repo}.png`;
     const title = prettifyTitle(repo);
+    const desc = opts.desc || DEFAULT_DESC;
 
     const card = document.createElement("article");
     card.className = "portfolio-card reveal";
     card.innerHTML = `
       <a class="portfolio-card__media" href="${escapeHtml(url)}" target="_blank" rel="noopener">
         <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(title)}" loading="lazy" />
+        <p class="portfolio-card__caption">${escapeHtml(desc)}</p>
         <span class="portfolio-card__index">${num}</span>
         <span class="portfolio-card__arrow" aria-hidden="true">&#8599;</span>
       </a>
@@ -93,7 +111,7 @@
           <span class="tag">${escapeHtml(hostLabel(url))}</span>
         </div>
         <h3 class="portfolio-card__title">${escapeHtml(title)}</h3>
-        <p class="portfolio-card__desc">Built and shipped end to end — open the repository for the code, docs, and details.</p>
+        <p class="portfolio-card__desc">${escapeHtml(desc)}</p>
         <a class="portfolio-card__link" href="${escapeHtml(url)}" target="_blank" rel="noopener">View project <span aria-hidden="true">&rarr;</span></a>
       </div>
     `;
@@ -153,7 +171,10 @@
   const renderGrid = (container, lines, opts = {}) => {
     container.innerHTML = "";
     const urls = lines.map((l) => String(l).trim()).filter(Boolean);
-    urls.forEach((url, i) => container.appendChild(buildCard(url, i, opts)));
+    const descs = opts.descriptions || [];
+    urls.forEach((url, i) =>
+      container.appendChild(buildCard(url, i, { ...opts, desc: descs[i] }))
+    );
     observeReveals(container);
     return urls.length;
   };
@@ -161,21 +182,35 @@
   /* Auto-render on index.html (element #portfolio-grid). */
   const grid = document.getElementById("portfolio-grid");
   if (grid) {
-    fetch(`links/portfolio-links.txt?v=${Date.now()}`, { cache: "no-store" })
-      .then((res) => {
+    const bust = `?v=${Date.now()}`;
+    Promise.all([
+      fetch(`${LINKS_URL}${bust}`, { cache: "no-store" }).then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.text();
+      }),
+      fetch(`${DESCS_URL}${bust}`, { cache: "no-store" })
+        .then((res) => (res.ok ? res.text() : ""))
+        .catch(() => ""),
+    ])
+      .then(([linksText, descsText]) => {
+        const descriptions = descsText
+          .split(/\r?\n/)
+          .map((l) => l.trim())
+          .filter(Boolean);
+        renderGrid(grid, linksText.split(/\r?\n/), { descriptions });
       })
-      .then((text) => renderGrid(grid, text.split(/\r?\n/)))
       .catch((err) => {
         console.warn(
           "portfolio.js: couldn't load links/portfolio-links.txt (works over http/https) — using embedded fallback list.",
           err
         );
-        renderGrid(grid, FALLBACK_LINES);
+        renderGrid(grid, FALLBACK_LINES, { descriptions: FALLBACK_DESCS });
       });
   }
 
   /* Exposed for the admin page. */
-  window.Portfolio = { buildCard, renderGrid, prettifyTitle, repoFromUrl, pad2, FALLBACK_LINES };
+  window.Portfolio = {
+    buildCard, renderGrid, prettifyTitle, repoFromUrl, pad2,
+    FALLBACK_LINES, FALLBACK_DESCS,
+  };
 })();

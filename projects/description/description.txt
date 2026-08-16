@@ -1,0 +1,4 @@
+SQL-powered inventory tracker — manage stock, products, and movement with clean, queryable data.
+Automated data feed pipeline — collects, cleans, and delivers data end to end.
+Streamlit app that turns simple inputs into ready-to-use contracts in seconds.
+Turns any picture into a LEGO-style mosaic, brick by brick.

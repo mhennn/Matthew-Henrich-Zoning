@@ -638,6 +638,28 @@ em { font-style: normal; }   /* accent <em> is colored, not italic */
    }
    .portfolio-card__media img.is-broken { display: none; }  /* added by JS on error */
 
+   /* Description caption overlaid on the image (injected by JS from description.txt) */
+   .portfolio-card__caption {
+     position: absolute;
+     left: 0;
+     right: 0;
+     bottom: 0;
+     z-index: 1;
+     margin: 0;
+     padding: 2.4rem 3.8rem 1rem 1.1rem;
+     font-size: 0.85rem;
+     line-height: 1.5;
+     color: #eef2ef;
+     background: linear-gradient(180deg, transparent, rgba(5, 6, 5, 0.88) 62%);
+     opacity: 0;
+     transform: translateY(10px);
+     transition: opacity 0.4s ease, transform 0.4s var(--ease);
+   }
+   .portfolio-card:hover .portfolio-card__caption {
+     opacity: 1;
+     transform: none;
+   }
+
    /* Bottom scrim that fades in on hover */
    .portfolio-card__media::after {
      content: "";
