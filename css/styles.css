@@ -760,40 +760,24 @@ em { font-style: normal; }   /* accent <em> is colored, not italic */
      gap: clamp(2.5rem, 5vw, 5rem);
      align-items: start;
    }
-   .skills__bars { display: grid; gap: 1.5rem; }
+   .skills__groups { display: grid; gap: 1.6rem; }
 
-   .skill__head {
-     display: flex;
-     justify-content: space-between;
-     align-items: baseline;
-     margin-bottom: 0.55rem;
+   .skill-group {
+     border-top: 1px solid var(--border);
+     padding-top: 1.1rem;
+     transition: border-color 0.3s ease;
+   }
+   .skill-group:hover { border-color: rgba(57, 255, 136, 0.4); }
+   .skill-group__title {
      font-family: var(--font-head);
-     font-size: 0.98rem;
+     font-size: 1.02rem;
      font-weight: 600;
+     letter-spacing: -0.01em;
+     margin-bottom: 0.4rem;
    }
-   .skill__pct {
-     font-family: var(--font-body);
-     font-size: 0.85rem;
-     font-weight: 500;
+   .skill-group__list {
+     font-size: 0.95rem;
      color: var(--text-dim);
-   }
-   .skill__track {
-     height: 6px;
-     border-radius: 999px;
-     background: rgba(255, 255, 255, 0.06);
-     overflow: hidden;
-   }
-   .skill__fill {
-     height: 100%;
-     width: 0;                       /* set to data-level % by JS on scroll */
-     border-radius: 999px;
-     background: linear-gradient(90deg, var(--green-strong), var(--green));
-     box-shadow: 0 0 16px rgba(57, 255, 136, 0.5);
-     transition: width 1.2s var(--ease) 0.1s;
-   }
-   .skill__fill--red {
-     background: linear-gradient(90deg, var(--red-strong), var(--red));
-     box-shadow: 0 0 16px rgba(255, 59, 59, 0.5);
    }
 
    .skills__stack .about__body { margin-bottom: 1.8rem; }
@@ -822,23 +806,6 @@ em { font-style: normal; }   /* accent <em> is colored, not italic */
      border-color: rgba(57, 255, 136, 0.45);
      color: var(--green);
      box-shadow: 0 8px 20px rgba(57, 255, 136, 0.1);
-   }
-
-   .skills__note {
-     padding: 1.4rem 1.6rem;
-     border-left: 2px solid var(--red);
-     transition: border-color 0.3s ease, transform 0.3s var(--ease);
-   }
-   .skills__note:hover {
-     border-color: var(--green);
-     transform: translateY(-3px);
-   }
-   .skills__note p { color: var(--text); font-size: 0.98rem; }
-   .skills__note footer {
-     margin-top: 0.8rem;
-     font-family: var(--font-head);
-     font-size: 0.82rem;
-     color: var(--text-dim);
    }
 
    /* ---------- Links ---------- */

@@ -3,11 +3,11 @@
    --------------------------------------------------------------------------
    Vanilla JS only (no frameworks, no libraries). Features:
    1.  Auto year in the footer
-   2.  Navbar "scrolled" state
-   3.  Mobile menu toggle (hamburger -> full-screen glass panel)
-   4.  Scroll-entrance reveals via IntersectionObserver (with stagger)
-   5.  Active nav-link highlighting via IntersectionObserver
-   6.  Skill bars animate to their data-level width on scroll
+   2.  Auto-incrementing years of experience
+   3.  Navbar "scrolled" state
+   4.  Mobile menu toggle (hamburger -> full-screen glass panel)
+   5.  Scroll-entrance reveals via IntersectionObserver (with stagger)
+   6.  Active nav-link highlighting via IntersectionObserver
    7.  Portfolio image error fallback (reveals the CSS gradient placeholder)
    ========================================================================== */
 
@@ -19,6 +19,14 @@
      ------------------------------------------------------------------ */
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  /* ------------------------------------------------------------------
+     1b. Years of experience — computed from a fixed start year so it
+         ticks up automatically every new year
+     ------------------------------------------------------------------ */
+  const START_YEAR = 2023; // first year of professional experience
+  const expEl = document.getElementById("years-exp");
+  if (expEl) expEl.textContent = new Date().getFullYear() - START_YEAR;
 
   /* ------------------------------------------------------------------
      2. Navbar — add a "scrolled" class once the page is scrolled down
@@ -136,30 +144,7 @@
   }
 
   /* ------------------------------------------------------------------
-     6. Skill bars — animate to the width stored in data-level
-     ------------------------------------------------------------------ */
-  const skills = document.querySelectorAll(".skill");
-
-  if ("IntersectionObserver" in window && skills.length) {
-    const skillObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const fill = entry.target.querySelector(".skill__fill");
-          if (fill && fill.dataset.level) {
-            fill.style.width = `${fill.dataset.level}%`;
-          }
-          skillObserver.unobserve(entry.target);
-        });
-      },
-      { threshold: 0.4 }
-    );
-
-    skills.forEach((skill) => skillObserver.observe(skill));
-  }
-
-  /* ------------------------------------------------------------------
-     7. Portfolio images — if a placeholder/broken image fails to load,
+     6. Portfolio images — if a placeholder/broken image fails to load,
         hide it so the card's gradient placeholder shows instead
      ------------------------------------------------------------------ */
   document.querySelectorAll(".portfolio-card__media img").forEach((img) => {
