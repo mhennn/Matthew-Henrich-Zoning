@@ -269,44 +269,46 @@
           </div>
         </header>
 
-        <div class="links-grid" id="links-grid">
-          <!-- Cards are generated from links/social-links.txt by js/social.js. -->
-        </div>
-
-        <!-- Contact form — delivered to matthewhenrich04@gmail.com via FormSubmit (see js/contact.js) -->
-        <div class="contact-card reveal" id="contact">
-          <div class="contact-card__head">
-            <h3 class="contact-card__title">Send a <em class="text-green">message.</em></h3>
-            <p class="contact-card__note">
-              Questions, collabs, or just saying hi — drop a line and I&rsquo;ll get back to you.
-            </p>
+        <div class="links-layout">
+          <div class="links-grid" id="links-grid">
+            <!-- Cards are generated from links/social-links.txt by js/social.js. -->
           </div>
-          <form class="contact-form" id="contact-form" novalidate>
-            <!-- Honeypot for spam bots (hidden, humans never see it) -->
-            <input type="text" name="_honey" class="contact-form__honey" tabindex="-1" autocomplete="off" aria-hidden="true" />
-            <input type="hidden" name="_subject" value="New inquiry from your portfolio" />
 
-            <div class="contact-form__row">
-              <label class="contact-form__field">
-                <span class="contact-form__label">Name</span>
-                <input type="text" name="name" placeholder="Your name" required />
-              </label>
-              <label class="contact-form__field">
-                <span class="contact-form__label">Email</span>
-                <input type="email" name="email" placeholder="you@example.com" required />
-              </label>
+          <!-- Contact form — delivered to matthewhenrich04@gmail.com via FormSubmit (see js/contact.js) -->
+          <div class="contact-card reveal" id="contact">
+            <div class="contact-card__head">
+              <h3 class="contact-card__title">Send a <em class="text-green">message.</em></h3>
+              <p class="contact-card__note">
+                Questions, collabs, or just saying hi, drop a line and I&rsquo;ll get back to you.
+              </p>
             </div>
+            <form class="contact-form" id="contact-form" novalidate>
+              <!-- Honeypot for spam bots (hidden, humans never see it) -->
+              <input type="text" name="_honey" class="contact-form__honey" tabindex="-1" autocomplete="off" aria-hidden="true" />
+              <input type="hidden" name="_subject" value="New inquiry from your portfolio" />
 
-            <label class="contact-form__field">
-              <span class="contact-form__label">Message</span>
-              <textarea name="message" rows="4" placeholder="Tell me about your project…" required></textarea>
-            </label>
+              <div class="contact-form__row">
+                <label class="contact-form__field">
+                  <span class="contact-form__label">Name</span>
+                  <input type="text" name="name" placeholder="Your name" required />
+                </label>
+                <label class="contact-form__field">
+                  <span class="contact-form__label">Email</span>
+                  <input type="email" name="email" placeholder="you@example.com" required />
+                </label>
+              </div>
 
-            <div class="contact-form__actions">
-              <button type="submit" class="btn btn--primary">Send message</button>
-              <p class="contact-form__status" role="status" aria-live="polite"></p>
-            </div>
-          </form>
+              <label class="contact-form__field">
+                <span class="contact-form__label">Message</span>
+                <textarea name="message" rows="4" placeholder="Tell me about your project…" required></textarea>
+              </label>
+
+              <div class="contact-form__actions">
+                <button type="submit" class="btn btn--primary">Send message</button>
+                <p class="contact-form__status" role="status" aria-live="polite"></p>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </section>

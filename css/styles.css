@@ -833,6 +833,16 @@ em { font-style: normal; }   /* accent <em> is colored, not italic */
    }
 
    /* ---------- Links ---------- */
+   /* Side-by-side: link cards left, contact form right (stacks below 1024px) */
+   .links-layout {
+     display: grid;
+     grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+     gap: clamp(1.2rem, 2.5vw, 1.8rem);
+     align-items: start;
+   }
+   /* Inside the layout, the auto-fit grid collapses to one tidy column */
+   .links-layout .links-grid { grid-template-columns: 1fr; }
+
    .links-grid {
      display: grid;
      grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
@@ -910,7 +920,6 @@ em { font-style: normal; }   /* accent <em> is colored, not italic */
    }
    /* ---------- Contact card (form) ---------- */
    .contact-card {
-     margin-top: clamp(1.2rem, 2.5vw, 1.8rem);
      padding: clamp(1.5rem, 3vw, 2.2rem);
      border-radius: var(--radius);
      border: 1px solid var(--border);
@@ -1080,6 +1089,7 @@ em { font-style: normal; }   /* accent <em> is colored, not italic */
      .skills__grid {
        grid-template-columns: 1fr;
      }
+     .links-layout { grid-template-columns: 1fr; }
      .about__side { position: static; }
      .hero__card { max-width: 460px; }
      .hero { min-height: auto; padding-block: calc(var(--nav-h) + 48px) 3.5rem; }

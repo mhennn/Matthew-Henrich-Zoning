@@ -1,17 +1,23 @@
 /* ==========================================================================
    PORTFOLIO.JS — dynamic project cards
    --------------------------------------------------------------------------
-   Renders the "Work" grid from three plain files. No HTML editing needed:
+   Renders the "Work" grid from two plain files + the projects/ folder.
+   No HTML editing needed:
 
      • links/portfolio-links.txt              → one project URL per line (row order)
      • projects/<NN>_<repo>.png               → thumbnail. NN = row number (01, 02, …),
                                                 <repo> = last segment of the URL.
-     • projects/description/description.txt   → one description per line (row order).
+     • projects/description/description.txt   → optional manual descriptions
+                                                (one per line, row order).
+
+   Descriptions resolve in this order:
+     1. a manual line in description.txt (always wins)
+     2. the repo's real description from the GitHub API (for GitHub URLs)
+     3. a generic default
 
    Add a line to the .txt + drop a correctly-named image into projects/
-   (and optionally a description line) and the grid updates on next load.
-   The embedded fallback list is used only when the .txt can't be fetched
-   (e.g. the page opened via file://).
+   and the grid updates on next load. The embedded fallback list is used
+   only when the .txt can't be fetched (e.g. the page opened via file://).
    ========================================================================== */
 
 (() => {
@@ -19,6 +25,7 @@
 
   const LINKS_URL = "links/portfolio-links.txt";
   const DESCS_URL = "projects/description/description.txt";
+  const GITHUB_API = "https://api.github.com/repos";
 
   const DEFAULT_DESC =
     "Built and shipped end to end — open the repository for the code, docs, and details.";
@@ -86,6 +93,39 @@
     } catch {
       return "Project";
     }
+  };
+
+  /* GitHub owner/repo from a URL (null when not a GitHub URL). */
+  const githubRepo = (url) => {
+    try {
+      const u = new URL(url);
+      if (u.hostname.replace(/^www\./, "").toLowerCase() !== "github.com") return null;
+      const segs = u.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+      if (segs.length < 2) return null;
+      return { owner: segs[segs.length - 2], repo: segs[segs.length - 1] };
+    } catch {
+      return null;
+    }
+  };
+
+  /* Fetch the GitHub description for each URL ("" when unavailable). */
+  const fetchGitHubDescriptions = (urls) => {
+    const jobs = urls.map((url) => {
+      const gh = githubRepo(url);
+      if (!gh) return Promise.resolve("");
+      return fetch(
+        `${GITHUB_API}/${encodeURIComponent(gh.owner)}/${encodeURIComponent(gh.repo)}`
+      )
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((data) =>
+          typeof data.description === "string" ? data.description.trim() : ""
+        )
+        .catch(() => "");
+    });
+    return Promise.all(jobs);
   };
 
   /* Build one .portfolio-card element for a URL at a 0-based index. */
@@ -193,11 +233,19 @@
         .catch(() => ""),
     ])
       .then(([linksText, descsText]) => {
-        const descriptions = descsText
+        const urls = linksText
+          .split(/\r?\n/)
+          .map((l) => String(l).trim())
+          .filter(Boolean);
+        const manual = descsText
           .split(/\r?\n/)
           .map((l) => l.trim())
           .filter(Boolean);
-        renderGrid(grid, linksText.split(/\r?\n/), { descriptions });
+        // Auto-fetch GitHub descriptions for projects without a manual line.
+        return fetchGitHubDescriptions(urls).then((auto) => {
+          const descriptions = urls.map((_, i) => manual[i] || auto[i]);
+          renderGrid(grid, urls, { descriptions });
+        });
       })
       .catch((err) => {
         console.warn(
@@ -210,7 +258,7 @@
 
   /* Exposed for the admin page. */
   window.Portfolio = {
-    buildCard, renderGrid, prettifyTitle, repoFromUrl, pad2,
+    buildCard, renderGrid, prettifyTitle, repoFromUrl, githubRepo, pad2,
     FALLBACK_LINES, FALLBACK_DESCS,
   };
 })();
