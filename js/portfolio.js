@@ -6,7 +6,7 @@
    2. WITHOUT TOKEN: Falls back to links/portfolio-links.txt (manual mode).
 
    Images: projects/<NN>_<repo>.png  (NN = row number, 01, 02, …)
-   Descriptions: projects/description/description.txt (manual, one per line)
+   Descriptions: GitHub description > projects/description/description.txt
    ========================================================================== */
 
 (() => {
@@ -130,6 +130,7 @@
       .split(" ")
       .map((w) => ACRONYMS.has(w.toUpperCase()) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1))
       .join(" ");
+    /* Priority: GitHub description > manual > default */
     const desc = repo.description || manualDesc || DEFAULT_DESC;
     const url = repo.html_url;
     const lang = repo.language || "";
@@ -201,7 +202,7 @@
     card.innerHTML = `
       <a class="portfolio-card__media" href="${escapeHtml(url)}" target="_blank" rel="noopener">
         <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(title)}" loading="lazy" />
-        <p class="portfolio-card__caption">${escapeHtml(desc)}</p>
+        <p class="portfolio-card__caption">${escapeHtml(desc || DEFAULT_DESC)}</p>
         <span class="portfolio-card__index">${num}</span>
         <span class="portfolio-card__arrow" aria-hidden="true">&#8599;</span>
       </a>
@@ -211,7 +212,7 @@
           <span class="tag">${escapeHtml(hostLabel(url))}</span>
         </div>
         <h3 class="portfolio-card__title">${escapeHtml(title)}</h3>
-        <p class="portfolio-card__desc">${escapeHtml(desc)}</p>
+        <p class="portfolio-card__desc">${escapeHtml(desc || DEFAULT_DESC)}</p>
         <a class="portfolio-card__link" href="${escapeHtml(url)}" target="_blank" rel="noopener">View project <span aria-hidden="true">&rarr;</span></a>
       </div>
     `;
@@ -287,27 +288,18 @@
     ])
       .then(([repos, descsText]) => {
         if (!repos || !repos.length) {
-          /* API failed — fall back to manual mode */
           return fallbackManualMode(grid, descsText);
         }
 
         const manual = descsText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 
-        /* Filter: skip forks, profile READMEs (name matches username), sort by updated */
+        /* Filter: skip forks, skip profile README (name matches username), sort by updated */
         const filtered = repos
           .filter((r) => !r.fork && r.name.toLowerCase() !== USERNAME.toLowerCase())
           .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
         grid.innerHTML = "";
         filtered.forEach((repo, i) => {
-          /* Check if there's a manual description for this repo name */
-          const manualIdx = manual.findIndex((_, mi) => {
-            const num = pad2(mi + 1);
-            return document.querySelector
-              ? true
-              : false; // descriptions are matched by order, not name
-          });
-          /* Match manual descriptions by order (same as legacy mode) */
           const desc = manual[i] || "";
           grid.appendChild(buildCardFromRepo(repo, i, desc));
         });
