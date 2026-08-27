@@ -2,3 +2,4 @@ SQL-powered inventory tracker — manage stock, products, and movement with clea
 Automated data feed pipeline — collects, cleans, and delivers data end to end.
 Streamlit app that turns simple inputs into ready-to-use contracts in seconds.
 Turns any picture into a LEGO-style mosaic, brick by brick.
+A portal for student to check available OJT list that the school are offering

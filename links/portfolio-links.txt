@@ -2,3 +2,4 @@ https://github.com/mhennn/SQL-Inventory-System
 https://github.com/mhennn/Feed-Pipeline
 https://github.com/mhennn/Contract-Generator-Streamlit
 https://github.com/mhennn/PICTLEGO
+https://github.com/mhennn/Student-Job-Portal
