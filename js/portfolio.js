@@ -1,36 +1,27 @@
 /* ==========================================================================
    PORTFOLIO.JS — dynamic project cards
-   --------------------------------------------------------------------------
-   Renders the "Work" grid from two plain files + the projects/ folder.
-   No HTML editing needed:
+   --------------------------------------------------------------------------Modes:
+   1. WITH TOKEN: Fetches all public repos from GitHub API automatically.
+      Manual images from projects/<NN>_<repo>.png are used when available.
+   2. WITHOUT TOKEN: Falls back to links/portfolio-links.txt (manual mode).
 
-     • links/portfolio-links.txt              → one project URL per line (row order)
-     • projects/<NN>_<repo>.png               → thumbnail. NN = row number (01, 02, …),
-                                                <repo> = last segment of the URL.
-     • projects/description/description.txt   → optional manual descriptions
-                                                (one per line, row order).
-
-   Descriptions resolve in this order:
-     1. a manual line in description.txt (always wins)
-     2. the repo's real description from the GitHub API (for GitHub URLs)
-     3. a generic default
-
-   Add a line to the .txt + drop a correctly-named image into projects/
-   and the grid updates on next load. The embedded fallback list is used
-   only when the .txt can't be fetched (e.g. the page opened via file://).
+   Images: projects/<NN>_<repo>.png  (NN = row number, 01, 02, …)
+   Descriptions: projects/description/description.txt (manual, one per line)
    ========================================================================== */
 
 (() => {
   "use strict";
 
-  const LINKS_URL = "links/portfolio-links.txt";
+  const config = window.GITHUB_CONFIG || {};
+  const USERNAME = config.username || "mhennn";
+  const TOKEN = config.token || "";
+
   const DESCS_URL = "projects/description/description.txt";
-  const GITHUB_API = "https://api.github.com/repos";
+  const GITHUB_USER_API = `https://api.github.com/users/${USERNAME}/repos`;
 
   const DEFAULT_DESC =
     "Built and shipped end to end — open the repository for the code, docs, and details.";
 
-  /* Fallback shown only when the files can't be fetched. */
   const FALLBACK_LINES = [
     "https://github.com/mhennn/SQL-Inventory-System",
     "https://github.com/mhennn/Feed-Pipeline",
@@ -45,33 +36,46 @@
     "Turns any picture into a LEGO-style mosaic, brick by brick.",
   ];
 
-  /* Words that should stay uppercase in generated titles. */
   const ACRONYMS = new Set([
     "SQL", "API", "UI", "UX", "BI", "RPA", "HTML", "CSS", "JS",
-    "AI", "PDF", "CRM", "ERP", "DB", "ETL", "AWS",
+    "AI", "PDF", "CRM", "ERP", "DB", "ETL", "AWS", "OJT",
   ]);
+
+  const LANG_COLORS = {
+    JavaScript: "#f1e05a",
+    TypeScript: "#3178c6",
+    Python: "#3572A5",
+    Java: "#b07219",
+    "C++": "#f34b7d",
+    C: "#555555",
+    "C#": "#178600",
+    Go: "#00ADD8",
+    Rust: "#dea584",
+    Ruby: "#701516",
+    PHP: "#4F5D95",
+    Swift: "#F05138",
+    Kotlin: "#A97BFF",
+    Dart: "#00B4AB",
+    HTML: "#e34c26",
+    CSS: "#563d7c",
+    Shell: "#89e051",
+    "Jupyter Notebook": "#DA5B0B",
+    R: "#198CE7",
+    Lua: "#000080",
+    "Objective-C": "#438eff",
+    Scala: "#c22d40",
+    Haskell: "#5e5086",
+    Elixir: "#6e4a7e",
+    Vue: "#41b883",
+    Svelte: "#ff3e00",
+  };
 
   const pad2 = (n) => String(n).padStart(2, "0");
 
   const escapeHtml = (s) =>
-    String(s).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    }[c]));
-
-  /* Last segment of the URL = repo name (strips trailing slash). */
-  const repoFromUrl = (url) => {
-    const clean = String(url).trim().replace(/\/+$/, "");
-    const seg = clean.split("/").pop() || "";
-    try {
-      return decodeURIComponent(seg);
-    } catch {
-      return seg;
-    }
-  };
+    String(s).replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
+    );
 
   const prettifyTitle = (repo) => {
     const cleaned = repo.replace(/-Streamlit$/i, "").replace(/[-_]+/g, " ");
@@ -86,16 +90,96 @@
       .join(" ");
   };
 
+  /* ------------------------------------------------------------------ */
+  /*  Fetch ALL public repos from GitHub API (paginated)                 */
+  /* ------------------------------------------------------------------ */
+  function fetchAllRepos() {
+    if (!TOKEN) return Promise.resolve(null);
+
+    const headers = { Authorization: `bearer ${TOKEN}` };
+    const perPage = 100;
+    let page = 1;
+    const allRepos = [];
+
+    function fetchPage() {
+      return fetch(`${GITHUB_USER_API}?type=public&sort=updated&per_page=${perPage}&page=${page}`, { headers })
+        .then((r) => {
+          if (!r.ok) throw new Error(`GitHub API ${r.status}`);
+          return r.json();
+        })
+        .then((repos) => {
+          allRepos.push(...repos);
+          if (repos.length === perPage) {
+            page++;
+            return fetchPage();
+          }
+          return allRepos;
+        });
+    }
+
+    return fetchPage().catch(() => null);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Build a card from GitHub API repo data                             */
+  /* ------------------------------------------------------------------ */
+  function buildCardFromRepo(repo, index, manualDesc) {
+    const num = pad2(index + 1);
+    const imgSrc = `projects/${num}_${repo.name}.png`;
+    const title = repo.name.replace(/[-_]+/g, " ")
+      .split(" ")
+      .map((w) => ACRONYMS.has(w.toUpperCase()) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+    const desc = repo.description || manualDesc || DEFAULT_DESC;
+    const url = repo.html_url;
+    const lang = repo.language || "";
+    const stars = repo.stargazers_count || 0;
+    const topics = (repo.topics || []).slice(0, 3);
+
+    const card = document.createElement("article");
+    card.className = "portfolio-card reveal";
+    card.innerHTML = `
+      <a class="portfolio-card__media" href="${escapeHtml(url)}" target="_blank" rel="noopener">
+        <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(title)}" loading="lazy" />
+        <p class="portfolio-card__caption">${escapeHtml(desc)}</p>
+        <span class="portfolio-card__index">${num}</span>
+        <span class="portfolio-card__arrow" aria-hidden="true">&#8599;</span>
+      </a>
+      <div class="portfolio-card__body">
+        <div class="portfolio-card__tags">
+          <span class="tag tag--green">Project</span>
+          ${lang ? `<span class="tag" style="border-color:${LANG_COLORS[lang] || "var(--border)"};color:${LANG_COLORS[lang] || "var(--text-dim)"}">${escapeHtml(lang)}</span>` : ""}
+          ${topics.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
+          ${stars > 0 ? `<span class="tag">&#9733; ${stars}</span>` : ""}
+        </div>
+        <h3 class="portfolio-card__title">${escapeHtml(title)}</h3>
+        <p class="portfolio-card__desc">${escapeHtml(desc)}</p>
+        <a class="portfolio-card__link" href="${escapeHtml(url)}" target="_blank" rel="noopener">View project <span aria-hidden="true">&rarr;</span></a>
+      </div>
+    `;
+
+    const img = card.querySelector("img");
+    img.addEventListener("error", () => img.classList.add("is-broken"));
+
+    return card;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Build a card from a URL (legacy/manual mode)                       */
+  /* ------------------------------------------------------------------ */
+  const repoFromUrl = (url) => {
+    const clean = String(url).trim().replace(/\/+$/, "");
+    const seg = clean.split("/").pop() || "";
+    try { return decodeURIComponent(seg); } catch { return seg; }
+  };
+
   const hostLabel = (url) => {
     try {
       const host = new URL(url).hostname.replace(/^www\./, "");
       return host.split(".")[0].charAt(0).toUpperCase() + host.split(".")[0].slice(1);
-    } catch {
-      return "Project";
-    }
+    } catch { return "Project"; }
   };
 
-  /* GitHub owner/repo from a URL (null when not a GitHub URL). */
   const githubRepo = (url) => {
     try {
       const u = new URL(url);
@@ -103,38 +187,14 @@
       const segs = u.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
       if (segs.length < 2) return null;
       return { owner: segs[segs.length - 2], repo: segs[segs.length - 1] };
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   };
 
-  /* Fetch the GitHub description for each URL ("" when unavailable). */
-  const fetchGitHubDescriptions = (urls) => {
-    const jobs = urls.map((url) => {
-      const gh = githubRepo(url);
-      if (!gh) return Promise.resolve("");
-      return fetch(
-        `${GITHUB_API}/${encodeURIComponent(gh.owner)}/${encodeURIComponent(gh.repo)}`
-      )
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res.json();
-        })
-        .then((data) =>
-          typeof data.description === "string" ? data.description.trim() : ""
-        )
-        .catch(() => "");
-    });
-    return Promise.all(jobs);
-  };
-
-  /* Build one .portfolio-card element for a URL at a 0-based index. */
-  const buildCard = (url, index, opts = {}) => {
+  function buildCardFromUrl(url, index, desc) {
     const repo = repoFromUrl(url);
     const num = pad2(index + 1);
     const imgSrc = `projects/${num}_${repo}.png`;
     const title = prettifyTitle(repo);
-    const desc = opts.desc || DEFAULT_DESC;
 
     const card = document.createElement("article");
     card.className = "portfolio-card reveal";
@@ -157,20 +217,29 @@
     `;
 
     const img = card.querySelector("img");
-    img.addEventListener("error", () => {
-      img.classList.add("is-broken");
-      if (opts.showMissingNote) {
-        const note = document.createElement("p");
-        note.className = "admin-missing";
-        note.textContent = `No image yet — save it as projects/${num}_${repo}.png`;
-        img.insertAdjacentElement("afterend", note);
-      }
-    });
+    img.addEventListener("error", () => img.classList.add("is-broken"));
 
     return card;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Fetch GitHub descriptions for manual URLs                          */
+  /* ------------------------------------------------------------------ */
+  const fetchGitHubDescriptions = (urls) => {
+    const jobs = urls.map((url) => {
+      const gh = githubRepo(url);
+      if (!gh) return Promise.resolve("");
+      return fetch(`https://api.github.com/repos/${encodeURIComponent(gh.owner)}/${encodeURIComponent(gh.repo)}`)
+        .then((r) => r.ok ? r.json() : Promise.reject())
+        .then((d) => typeof d.description === "string" ? d.description.trim() : "")
+        .catch(() => "");
+    });
+    return Promise.all(jobs);
   };
 
-  /* Reveal-on-scroll for dynamically injected cards (same effect as script.js). */
+  /* ------------------------------------------------------------------ */
+  /*  Reveal-on-scroll for dynamically injected cards                    */
+  /* ------------------------------------------------------------------ */
   let revealObserver = null;
   const observeReveals = (container) => {
     const els = container.querySelectorAll(".reveal");
@@ -191,13 +260,7 @@
             const index = siblings.indexOf(el);
             el.style.transitionDelay = `${(index % 3) * 90}ms`;
             el.classList.add("is-visible");
-            el.addEventListener(
-              "transitionend",
-              () => {
-                el.style.transitionDelay = "";
-              },
-              { once: true }
-            );
+            el.addEventListener("transitionend", () => { el.style.transitionDelay = ""; }, { once: true });
             revealObserver.unobserve(el);
           });
         },
@@ -207,58 +270,83 @@
     els.forEach((el) => revealObserver.observe(el));
   };
 
-  /* Render the grid from an array of lines (URLs). Returns the count. */
-  const renderGrid = (container, lines, opts = {}) => {
-    container.innerHTML = "";
-    const urls = lines.map((l) => String(l).trim()).filter(Boolean);
-    const descs = opts.descriptions || [];
-    urls.forEach((url, i) =>
-      container.appendChild(buildCard(url, i, { ...opts, desc: descs[i] }))
-    );
-    observeReveals(container);
-    return urls.length;
-  };
-
-  /* Auto-render on index.html (element #portfolio-grid). */
+  /* ------------------------------------------------------------------ */
+  /*  Main render logic                                                  */
+  /* ------------------------------------------------------------------ */
   const grid = document.getElementById("portfolio-grid");
-  if (grid) {
-    const bust = `?v=${Date.now()}`;
+  if (!grid) return;
+
+  const bust = `?v=${Date.now()}`;
+
+  if (TOKEN) {
+    /* === MODE 1: Auto-fetch from GitHub API === */
     Promise.all([
-      fetch(`${LINKS_URL}${bust}`, { cache: "no-store" }).then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.text();
-      }),
+      fetchAllRepos(),
       fetch(`${DESCS_URL}${bust}`, { cache: "no-store" })
-        .then((res) => (res.ok ? res.text() : ""))
-        .catch(() => ""),
+        .then((r) => r.ok ? r.text() : "").catch(() => ""),
     ])
-      .then(([linksText, descsText]) => {
-        const urls = linksText
-          .split(/\r?\n/)
-          .map((l) => String(l).trim())
-          .filter(Boolean);
-        const manual = descsText
-          .split(/\r?\n/)
-          .map((l) => l.trim())
-          .filter(Boolean);
-        // Auto-fetch GitHub descriptions for projects without a manual line.
+      .then(([repos, descsText]) => {
+        if (!repos || !repos.length) {
+          /* API failed — fall back to manual mode */
+          return fallbackManualMode(grid, descsText);
+        }
+
+        const manual = descsText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+
+        /* Filter: skip forks, profile READMEs (name matches username), sort by updated */
+        const filtered = repos
+          .filter((r) => !r.fork && r.name.toLowerCase() !== USERNAME.toLowerCase())
+          .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+
+        grid.innerHTML = "";
+        filtered.forEach((repo, i) => {
+          /* Check if there's a manual description for this repo name */
+          const manualIdx = manual.findIndex((_, mi) => {
+            const num = pad2(mi + 1);
+            return document.querySelector
+              ? true
+              : false; // descriptions are matched by order, not name
+          });
+          /* Match manual descriptions by order (same as legacy mode) */
+          const desc = manual[i] || "";
+          grid.appendChild(buildCardFromRepo(repo, i, desc));
+        });
+        observeReveals(grid);
+      })
+      .catch(() => fallbackManualMode(grid, ""));
+  } else {
+    /* === MODE 2: Manual mode (portfolio-links.txt) === */
+    fallbackManualMode(grid, "");
+  }
+
+  function fallbackManualMode(container, descsText) {
+    const LINKS_URL = "links/portfolio-links.txt";
+    fetch(`${LINKS_URL}${bust}`, { cache: "no-store" })
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.text();
+      })
+      .then((text) => {
+        const urls = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+        const manual = (descsText || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
         return fetchGitHubDescriptions(urls).then((auto) => {
           const descriptions = urls.map((_, i) => manual[i] || auto[i]);
-          renderGrid(grid, urls, { descriptions });
+          container.innerHTML = "";
+          urls.forEach((url, i) =>
+            container.appendChild(buildCardFromUrl(url, i, descriptions[i]))
+          );
+          observeReveals(container);
         });
       })
-      .catch((err) => {
-        console.warn(
-          "portfolio.js: couldn't load links/portfolio-links.txt (works over http/https) — using embedded fallback list.",
-          err
+      .catch(() => {
+        container.innerHTML = "";
+        FALLBACK_LINES.forEach((url, i) =>
+          container.appendChild(buildCardFromUrl(url, i, FALLBACK_DESCS[i]))
         );
-        renderGrid(grid, FALLBACK_LINES, { descriptions: FALLBACK_DESCS });
+        observeReveals(container);
       });
   }
 
-  /* Exposed for the admin page. */
-  window.Portfolio = {
-    buildCard, renderGrid, prettifyTitle, repoFromUrl, githubRepo, pad2,
-    FALLBACK_LINES, FALLBACK_DESCS,
-  };
+  /* Exposed for admin page */
+  window.Portfolio = { buildCardFromUrl, buildCardFromRepo, prettifyTitle, repoFromUrl, pad2 };
 })();
