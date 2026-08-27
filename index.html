@@ -36,6 +36,7 @@
       <ul class="nav__links" id="nav-links">
         <li><a class="nav__link is-active" href="#hero">Intro</a></li>
         <li><a class="nav__link" href="#about">About</a></li>
+        <li><a class="nav__link" href="#github">Activity</a></li>
         <li><a class="nav__link" href="#portfolio">Work</a></li>
         <li><a class="nav__link" href="#skills">Skills</a></li>
         <li><a class="nav__link" href="#links">Links</a></li>
@@ -162,6 +163,67 @@
     </section>
 
     <!-- ============================================================
+         GITHUB ACTIVITY — custom dark contribution grid.
+         ============================================================ -->
+    <section class="section github" id="github">
+      <div class="container">
+        <header class="section-head reveal">
+          <p class="eyebrow">03 / Activity</p>
+          <div class="section-head__row">
+            <h2 class="section-title">GitHub <em class="text-green">contributions.</em></h2>
+            <p class="section-head__note">
+              My commit activity over the past year.
+            </p>
+          </div>
+        </header>
+
+        <div class="github-chart reveal">
+          <div class="github-chart__card glass">
+            <!-- Top bar -->
+            <div class="github-chart__topbar">
+              <div class="github-chart__identity">
+                <svg class="github-chart__icon" viewBox="0 0 16 16" width="22" height="22" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                <span class="github-chart__username">mhennn</span>
+              </div>
+              <div class="github-chart__legend">
+                <span class="github-chart__legend-label">Less</span>
+                <span class="github-chart__swatch github-chart__swatch--0"></span>
+                <span class="github-chart__swatch github-chart__swatch--1"></span>
+                <span class="github-chart__swatch github-chart__swatch--2"></span>
+                <span class="github-chart__swatch github-chart__swatch--3"></span>
+                <span class="github-chart__swatch github-chart__swatch--4"></span>
+                <span class="github-chart__legend-label">More</span>
+              </div>
+            </div>
+
+            <!-- Year toggle -->
+            <div class="github-chart__years" id="github-years">
+              <button class="github-chart__year-btn" data-year="2026">2026</button>
+              <button class="github-chart__year-btn" data-year="2025">2025</button>
+            </div>
+
+            <!-- Contribution grid rendered by JS -->
+            <div class="github-chart__grid" id="github-grid"></div>
+
+            <!-- Month labels -->
+            <div class="github-chart__months" id="github-months"></div>
+
+            <!-- Bottom stats -->
+            <div class="github-chart__bottom">
+              <div class="github-chart__stat">
+                <span class="github-chart__stat-num text-green" id="gh-total">—</span>
+                <span class="github-chart__stat-label">contributions in the last year</span>
+              </div>
+              <a class="github-chart__link" href="https://github.com/mhennn" target="_blank" rel="noopener">
+                View full profile &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
          PORTFOLIO — rendered dynamically by js/portfolio.js.
          To add a project: append its URL to links/portfolio-links.txt
          and drop the thumbnail in projects/ as <NN>_<repo>.png (NN =
@@ -170,7 +232,7 @@
     <section class="section portfolio" id="portfolio">
       <div class="container">
         <header class="section-head reveal">
-          <p class="eyebrow">03 / Work</p>
+          <p class="eyebrow">04 / Work</p>
           <div class="section-head__row">
             <h2 class="section-title">Selected <em class="text-green">projects.</em></h2>
             <p class="section-head__note">
@@ -192,7 +254,7 @@
     <section class="section skills" id="skills">
       <div class="container">
         <header class="section-head reveal">
-          <p class="eyebrow">04 / Skills</p>
+          <p class="eyebrow">05 / Skills</p>
           <div class="section-head__row">
             <h2 class="section-title">My <em class="text-green">toolbox.</em></h2>
             <p class="section-head__note">
@@ -259,7 +321,7 @@
     <section class="section links" id="links">
       <div class="container">
         <header class="section-head reveal">
-          <p class="eyebrow">05 / Links</p>
+          <p class="eyebrow">06 / Links</p>
           <div class="section-head__row">
             <h2 class="section-title">Find me <em class="text-green">online.</em></h2>
             <p class="section-head__note">
@@ -332,5 +394,7 @@
   <script src="js/social.js"></script>
   <script src="js/contact.js"></script>
   <script src="js/script.js"></script>
+  <script src="js/github-config.js"></script>
+  <script src="js/github-chart.js"></script>
 </body>
 </html>
